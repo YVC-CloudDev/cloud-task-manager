@@ -1,3 +1,4 @@
+
 const taskForm = document.querySelector(".task-form-card form");
 const tasksSection = document.querySelector(".tasks-section");
 
@@ -8,6 +9,8 @@ if (taskForm) {
     const descriptionInput = taskForm.querySelector("textarea");
     const statusSelect = taskForm.querySelector("select");
     const submitButton = taskForm.querySelector("button");
+
+    loadTasks();
 
     taskForm.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -27,44 +30,32 @@ if (taskForm) {
             editingTask = null;
             submitButton.textContent = "Add Task";
         } else {
-            const taskCard = document.createElement("div");
-            taskCard.classList.add("task-card");
-
-            taskCard.innerHTML = `
-                <h3>${title}</h3>
-                <p>${description}</p>
-                <span class="status ${getStatusClass(status)}">${status}</span>
-
-                <div class="task-actions">
-                    <button class="edit-btn">Edit</button>
-                    <button class="delete-btn">Delete</button>
-                </div>
-            `;
-
-            tasksSection.appendChild(taskCard);
+            createTaskCard(title, description, status);
         }
 
+        saveTasks();
         taskForm.reset();
     });
 }
 
 document.addEventListener("click", function (e) {
-    const buttonText = e.target.textContent.trim();
-
-    if (buttonText === "Delete") {
+    if (e.target.classList.contains("delete-btn")) {
         e.target.closest(".task-card").remove();
+        saveTasks();
     }
 
-    if (buttonText === "Edit") {
+    if (e.target.classList.contains("edit-btn")) {
         const taskCard = e.target.closest(".task-card");
 
-        const title = taskCard.querySelector("h3").textContent;
-        const description = taskCard.querySelector("p").textContent;
-        const status = taskCard.querySelector(".status").textContent;
+        taskForm.querySelector("input").value =
+            taskCard.querySelector("h3").textContent;
 
-        taskForm.querySelector("input").value = title;
-        taskForm.querySelector("textarea").value = description;
-        taskForm.querySelector("select").value = status;
+        taskForm.querySelector("textarea").value =
+            taskCard.querySelector("p").textContent;
+
+        taskForm.querySelector("select").value =
+            taskCard.querySelector(".status").textContent;
+
         taskForm.querySelector("button").textContent = "Update Task";
 
         editingTask = taskCard;
@@ -75,6 +66,46 @@ document.addEventListener("click", function (e) {
         });
     }
 });
+
+function createTaskCard(title, description, status) {
+    const taskCard = document.createElement("div");
+    taskCard.classList.add("task-card");
+
+    taskCard.innerHTML = `
+        <h3>${title}</h3>
+        <p>${description}</p>
+        <span class="status ${getStatusClass(status)}">${status}</span>
+
+        <div class="task-actions">
+            <button class="edit-btn">Edit</button>
+            <button class="delete-btn">Delete</button>
+        </div>
+    `;
+
+    tasksSection.appendChild(taskCard);
+}
+
+function saveTasks() {
+    const tasks = [];
+
+    document.querySelectorAll(".task-card").forEach(task => {
+        tasks.push({
+            title: task.querySelector("h3").textContent,
+            description: task.querySelector("p").textContent,
+            status: task.querySelector(".status").textContent
+        });
+    });
+
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function loadTasks() {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+    savedTasks.forEach(task => {
+        createTaskCard(task.title, task.description, task.status);
+    });
+}
 
 function getStatusClass(status) {
     if (status === "In Progress") {
