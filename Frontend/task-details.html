@@ -6,20 +6,50 @@
     <title>TaskFlow - Task Details</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+    <div class="dashboard-container">
 
-    <div class="login-card">
-        <h1>Task Details</h1>
+        <header class="dashboard-header">
+            <h1>TaskFlow</h1>
 
-        <h2>Study AWS Services</h2>
+            <nav>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="index.html" class="logout-btn">Logout</a>
+            </nav>
+        </header>
 
-        <p>
-            Review Lambda, DynamoDB, S3 and API Gateway before the project presentation.
-        </p>
+        <section class="task-form-card">
+            <h2>Task Details</h2>
 
-        <p><strong>Status:</strong> In Progress</p>
+            <div class="task-card">
+                <h3>Study AWS Services</h3>
 
-        <p><strong>Due Date:</strong> 25/06/2026</p>
+                <p>
+                    Review Lambda, DynamoDB, S3 and API Gateway before the project presentation.
+                </p>
 
-        <button>Edit Task</button>
-        <button>Delete Task</button>
+                <p><strong>Status:</strong> In Progress</p>
+                <p><strong>Due Date:</strong> 25/06/2026</p>
+
+                <div class="task-actions">
+                    <a href="dashboard.html">
+                        <button>Edit Task</button>
+                    </a>
+
+                    <a href="dashboard.html">
+                        <button>Delete Task</button>
+                    </a>
+
+                    <a href="dashboard.html">
+                        <button>Back to Dashboard</button>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
