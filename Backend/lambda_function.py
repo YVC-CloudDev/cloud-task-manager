@@ -19,7 +19,7 @@ def response(status_code, body):
     }
 
 def lambda_handler(event, context):
-    method = event.get("httpMethod")
+    method = event.get("requestContext", {}).get("http", {}).get("method")
 
     if method == "OPTIONS":
         return response(200, {"message": "OK"})

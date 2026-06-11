@@ -1,64 +1,98 @@
+const API_URL =
+    "https://7kv7m4xsg3.execute-api.us-east-1.amazonaws.com/tasks";
 
 const taskForm = document.querySelector(".task-form-card form");
 const tasksSection = document.querySelector(".tasks-section");
 
-let editingTask = null;
+let editingTaskId = null;
 
-if (taskForm) {
-    const titleInput = taskForm.querySelector("input");
-    const descriptionInput = taskForm.querySelector("textarea");
-    const statusSelect = taskForm.querySelector("select");
-    const submitButton = taskForm.querySelector("button");
+const titleInput = taskForm.querySelector("input");
+const descriptionInput = taskForm.querySelector("textarea");
+const statusSelect = taskForm.querySelector("select");
+const submitButton = taskForm.querySelector("button");
 
-    loadTasks();
+loadTasks();
 
-    taskForm.addEventListener("submit", function (e) {
-        e.preventDefault();
+taskForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        const title = titleInput.value;
-        const description = descriptionInput.value;
-        const status = statusSelect.value;
+    const task = {
+        title: titleInput.value.trim(),
+        description: descriptionInput.value.trim(),
+        status: statusSelect.value
+    };
 
-        if (editingTask) {
-            editingTask.querySelector("h3").textContent = title;
-            editingTask.querySelector("p").textContent = description;
+    try {
+        if (editingTaskId) {
+            task.taskId = editingTaskId;
 
-            const statusSpan = editingTask.querySelector(".status");
-            statusSpan.textContent = status;
-            statusSpan.className = "status " + getStatusClass(status);
+            await fetch(API_URL, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(task)
+            });
 
-            editingTask = null;
+            editingTaskId = null;
             submitButton.textContent = "Add Task";
         } else {
-            createTaskCard(title, description, status);
+            await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(task)
+            });
         }
 
-        saveTasks();
         taskForm.reset();
-    });
-}
+        loadTasks();
 
-document.addEventListener("click", function (e) {
+    } catch (error) {
+        console.error("Error saving task:", error);
+    }
+});
+
+document.addEventListener("click", async (e) => {
+
     if (e.target.classList.contains("delete-btn")) {
-        e.target.closest(".task-card").remove();
-        saveTasks();
+
+        const taskCard = e.target.closest(".task-card");
+        const taskId = taskCard.dataset.id;
+
+        try {
+            await fetch(API_URL, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ taskId })
+            });
+
+            loadTasks();
+
+        } catch (error) {
+            console.error("Delete error:", error);
+        }
     }
 
     if (e.target.classList.contains("edit-btn")) {
+
         const taskCard = e.target.closest(".task-card");
 
-        taskForm.querySelector("input").value =
+        editingTaskId = taskCard.dataset.id;
+
+        titleInput.value =
             taskCard.querySelector("h3").textContent;
 
-        taskForm.querySelector("textarea").value =
+        descriptionInput.value =
             taskCard.querySelector("p").textContent;
 
-        taskForm.querySelector("select").value =
+        statusSelect.value =
             taskCard.querySelector(".status").textContent;
 
-        taskForm.querySelector("button").textContent = "Update Task";
-
-        editingTask = taskCard;
+        submitButton.textContent = "Update Task";
 
         window.scrollTo({
             top: 0,
@@ -67,47 +101,60 @@ document.addEventListener("click", function (e) {
     }
 });
 
-function createTaskCard(title, description, status) {
+async function loadTasks() {
+
+    try {
+
+        tasksSection.innerHTML = "";
+
+        const response = await fetch(API_URL);
+        const tasks = await response.json();
+
+        tasks.forEach(task => {
+            createTaskCard(
+                task.taskId,
+                task.title,
+                task.description,
+                task.status
+            );
+        });
+
+    } catch (error) {
+        console.error("Load error:", error);
+    }
+}
+
+function createTaskCard(taskId, title, description, status) {
+
     const taskCard = document.createElement("div");
+
     taskCard.classList.add("task-card");
+    taskCard.dataset.id = taskId;
 
     taskCard.innerHTML = `
         <h3>${title}</h3>
         <p>${description}</p>
-        <span class="status ${getStatusClass(status)}">${status}</span>
+
+        <span class="status ${getStatusClass(status)}">
+            ${status}
+        </span>
 
         <div class="task-actions">
-            <button class="edit-btn">Edit</button>
-            <button class="delete-btn">Delete</button>
+            <button class="edit-btn">
+                Edit
+            </button>
+
+            <button class="delete-btn">
+                Delete
+            </button>
         </div>
     `;
 
     tasksSection.appendChild(taskCard);
 }
 
-function saveTasks() {
-    const tasks = [];
-
-    document.querySelectorAll(".task-card").forEach(task => {
-        tasks.push({
-            title: task.querySelector("h3").textContent,
-            description: task.querySelector("p").textContent,
-            status: task.querySelector(".status").textContent
-        });
-    });
-
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-
-function loadTasks() {
-    const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-    savedTasks.forEach(task => {
-        createTaskCard(task.title, task.description, task.status);
-    });
-}
-
 function getStatusClass(status) {
+
     if (status === "In Progress") {
         return "progress";
     }
